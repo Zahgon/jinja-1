@@ -71,23 +71,17 @@ def identity(x: V) -> V:
     """Returns its argument. Useful for certain things in the
     environment.
     """
-    return x
+    pass
 
 
 def markup_join(seq: t.Iterable[t.Any]) -> str:
     """Concatenation that escapes if necessary and converts to string."""
-    buf = []
-    iterator = map(soft_str, seq)
-    for arg in iterator:
-        buf.append(arg)
-        if hasattr(arg, "__html__"):
-            return Markup("").join(chain(buf, iterator))
-    return concat(buf)
+    pass
 
 
 def str_join(seq: t.Iterable[t.Any]) -> str:
     """Simple args to string conversion and concatenation."""
-    return concat(map(str, seq))
+    pass
 
 
 def new_context(
@@ -136,7 +130,7 @@ class TemplateReference:
 def _dict_method_all(dict_method: F) -> F:
     @functools.wraps(dict_method)
     def f_all(self: "Context") -> t.Any:
-        return dict_method(self.get_all())
+        pass
 
     return t.cast(F, f_all)
 
@@ -187,15 +181,7 @@ class Context:
         self, name: str, current: t.Callable[["Context"], t.Iterator[str]]
     ) -> t.Union["BlockReference", "Undefined"]:
         """Render a parent block."""
-        try:
-            blocks = self.blocks[name]
-            index = blocks.index(current) + 1
-            blocks[index]
-        except LookupError:
-            return self.environment.undefined(
-                f"there is no parent block called {name!r}.", name="super"
-            )
-        return BlockReference(name, self, blocks, index)
+        pass
 
     def get(self, key: str, default: t.Any = None) -> t.Any:
         """Look up a variable by name, or return a default if the key is
@@ -246,7 +232,7 @@ class Context:
 
     def get_exported(self) -> dict[str, t.Any]:
         """Get a new dict with the exported variables."""
-        return {k: self.vars[k] for k in self.exported_vars}
+        pass
 
     def get_all(self) -> dict[str, t.Any]:
         """Return the complete context as dict including the exported
@@ -271,53 +257,14 @@ class Context:
         argument if the callable has :func:`pass_context` or
         :func:`pass_environment`.
         """
-        if __debug__:
-            __traceback_hide__ = True  # noqa
-
-        # Allow callable classes to take a context
-        if (
-            hasattr(__obj, "__call__")  # noqa: B004
-            and _PassArg.from_obj(__obj.__call__) is not None
-        ):
-            __obj = __obj.__call__
-
-        pass_arg = _PassArg.from_obj(__obj)
-
-        if pass_arg is _PassArg.context:
-            # the active context should have access to variables set in
-            # loops and blocks without mutating the context itself
-            if kwargs.get("_loop_vars"):
-                __self = __self.derived(kwargs["_loop_vars"])
-            if kwargs.get("_block_vars"):
-                __self = __self.derived(kwargs["_block_vars"])
-            args = (__self,) + args
-        elif pass_arg is _PassArg.eval_context:
-            args = (__self.eval_ctx,) + args
-        elif pass_arg is _PassArg.environment:
-            args = (__self.environment,) + args
-
-        kwargs.pop("_block_vars", None)
-        kwargs.pop("_loop_vars", None)
-
-        try:
-            return __obj(*args, **kwargs)
-        except StopIteration:
-            return __self.environment.undefined(
-                "value was undefined because a callable raised a"
-                " StopIteration exception"
-            )
+        pass
 
     def derived(self, locals: dict[str, t.Any] | None = None) -> "Context":
         """Internal helper function to create a derived context.  This is
         used in situations where the system needs a new context in the same
         template that is independent.
         """
-        context = new_context(
-            self.environment, self.name, {}, self.get_all(), True, None, locals
-        )
-        context.eval_ctx = self.eval_ctx
-        context.blocks.update((k, list(v)) for k, v in self.blocks.items())
-        return context
+        pass
 
     keys = _dict_method_all(dict.keys)
     values = _dict_method_all(dict.values)
@@ -359,22 +306,11 @@ class BlockReference:
     @property
     def super(self) -> t.Union["BlockReference", "Undefined"]:
         """Super the block."""
-        if self._depth + 1 >= len(self._stack):
-            return self._context.environment.undefined(
-                f"there is no parent block called {self.name!r}.", name="super"
-            )
-        return BlockReference(self.name, self._context, self._stack, self._depth + 1)
+        pass
 
     @internalcode
     async def _async_call(self) -> str:
-        rv = self._context.environment.concat(  # type: ignore
-            [x async for x in self._stack[self._depth](self._context)]  # type: ignore
-        )
-
-        if self._context.eval_ctx.autoescape:
-            return Markup(rv)
-
-        return rv
+        pass
 
     @internalcode
     def __call__(self) -> str:
@@ -429,7 +365,7 @@ class LoopContext:
 
     @staticmethod
     def _to_iterator(iterable: t.Iterable[V]) -> t.Iterator[V]:
-        return iter(iterable)
+        pass
 
     @property
     def length(self) -> int:
@@ -438,17 +374,7 @@ class LoopContext:
         If the iterable is a generator or otherwise does not have a
         size, it is eagerly evaluated to get a size.
         """
-        if self._length is not None:
-            return self._length
-
-        try:
-            self._length = len(self._iterable)  # type: ignore
-        except TypeError:
-            iterable = list(self._iterator)
-            self._iterator = self._to_iterator(iterable)
-            self._length = len(iterable) + self.index + (self._after is not missing)
-
-        return self._length
+        pass
 
     def __len__(self) -> int:
         return self.length
@@ -456,7 +382,7 @@ class LoopContext:
     @property
     def depth(self) -> int:
         """How many levels deep a recursive loop currently is, starting at 1."""
-        return self.depth0 + 1
+        pass
 
     @property
     def index(self) -> int:
@@ -469,7 +395,7 @@ class LoopContext:
 
         Requires calculating :attr:`length`.
         """
-        return self.length - self.index
+        pass
 
     @property
     def revindex(self) -> int:
@@ -477,12 +403,12 @@ class LoopContext:
 
         Requires calculating :attr:`length`.
         """
-        return self.length - self.index0
+        pass
 
     @property
     def first(self) -> bool:
         """Whether this is the first iteration of the loop."""
-        return self.index0 == 0
+        pass
 
     def _peek_next(self) -> t.Any:
         """Return the next element in the iterable, or :data:`missing`
@@ -490,11 +416,7 @@ class LoopContext:
         the result in :attr:`_last` for use in subsequent checks. The
         cache is reset when :meth:`__next__` is called.
         """
-        if self._after is not missing:
-            return self._after
-
-        self._after = next(self._iterator, missing)
-        return self._after
+        pass
 
     @property
     def last(self) -> bool:
@@ -504,17 +426,14 @@ class LoopContext:
         :func:`itertools.groupby` for issues this can cause.
         The :func:`groupby` filter avoids that issue.
         """
-        return self._peek_next() is missing
+        pass
 
     @property
     def previtem(self) -> t.Union[t.Any, "Undefined"]:
         """The item in the previous iteration. Undefined during the
         first iteration.
         """
-        if self.first:
-            return self._undefined("there is no previous item")
-
-        return self._before
+        pass
 
     @property
     def nextitem(self) -> t.Union[t.Any, "Undefined"]:
@@ -525,12 +444,7 @@ class LoopContext:
         :func:`itertools.groupby` for issues this can cause.
         The :func:`jinja-filters.groupby` filter avoids that issue.
         """
-        rv = self._peek_next()
-
-        if rv is missing:
-            return self._undefined("there is no next item")
-
-        return rv
+        pass
 
     def cycle(self, *args: V) -> V:
         """Return a value from the given args, cycling through based on
@@ -538,10 +452,7 @@ class LoopContext:
 
         :param args: One or more values to cycle through.
         """
-        if not args:
-            raise TypeError("no items for cycling given")
-
-        return args[self.index0 % len(args)]
+        pass
 
     def changed(self, *value: t.Any) -> bool:
         """Return ``True`` if previously called with a different value
@@ -549,11 +460,7 @@ class LoopContext:
 
         :param value: One or more values to compare to the last call.
         """
-        if self._last_changed_value != value:
-            self._last_changed_value = value
-            return True
-
-        return False
+        pass
 
     def __iter__(self) -> "LoopContext":
         return self
@@ -595,53 +502,30 @@ class AsyncLoopContext(LoopContext):
     def _to_iterator(  # type: ignore
         iterable: t.Iterable[V] | t.AsyncIterable[V],
     ) -> t.AsyncIterator[V]:
-        return auto_aiter(iterable)
+        pass
 
     @property
     async def length(self) -> int:  # type: ignore
-        if self._length is not None:
-            return self._length
-
-        try:
-            self._length = len(self._iterable)  # type: ignore
-        except TypeError:
-            iterable = [x async for x in self._iterator]
-            self._iterator = self._to_iterator(iterable)
-            self._length = len(iterable) + self.index + (self._after is not missing)
-
-        return self._length
+        pass
 
     @property
     async def revindex0(self) -> int:  # type: ignore
-        return await self.length - self.index
+        pass
 
     @property
     async def revindex(self) -> int:  # type: ignore
-        return await self.length - self.index0
+        pass
 
     async def _peek_next(self) -> t.Any:
-        if self._after is not missing:
-            return self._after
-
-        try:
-            self._after = await self._iterator.__anext__()
-        except StopAsyncIteration:
-            self._after = missing
-
-        return self._after
+        pass
 
     @property
     async def last(self) -> bool:  # type: ignore
-        return await self._peek_next() is missing
+        pass
 
     @property
     async def nextitem(self) -> t.Union[t.Any, "Undefined"]:
-        rv = await self._peek_next()
-
-        if rv is missing:
-            return self._undefined("there is no next item")
-
-        return rv
+        pass
 
     def __aiter__(self) -> "AsyncLoopContext":
         return self
@@ -770,23 +654,10 @@ class Macro:
         return self._invoke(arguments, autoescape)
 
     async def _async_invoke(self, arguments: list[t.Any], autoescape: bool) -> str:
-        rv = await self._func(*arguments)  # type: ignore
-
-        if autoescape:
-            return Markup(rv)
-
-        return rv  # type: ignore
+        pass
 
     def _invoke(self, arguments: list[t.Any], autoescape: bool) -> str:
-        if self._environment.is_async:
-            return self._async_invoke(arguments, autoescape)  # type: ignore
-
-        rv = self._func(*arguments)
-
-        if autoescape:
-            rv = Markup(rv)
-
-        return rv
+        pass
 
     def __repr__(self) -> str:
         name = "anonymous" if self.name is None else repr(self.name)
@@ -832,22 +703,7 @@ class Undefined:
         """Build a message about the undefined value based on how it was
         accessed.
         """
-        if self._undefined_hint:
-            return self._undefined_hint
-
-        if self._undefined_obj is missing:
-            return f"{self._undefined_name!r} is undefined"
-
-        if not isinstance(self._undefined_name, str):
-            return (
-                f"{object_type_repr(self._undefined_obj)} has no"
-                f" element {self._undefined_name!r}"
-            )
-
-        return (
-            f"{object_type_repr(self._undefined_obj)!r} has no"
-            f" attribute {self._undefined_name!r}"
-        )
+        pass
 
     @internalcode
     def _fail_with_undefined_error(

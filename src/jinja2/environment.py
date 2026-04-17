@@ -84,26 +84,14 @@ def create_cache(
     size: int,
 ) -> t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"] | None:
     """Return the cache class for the given size."""
-    if size == 0:
-        return None
-
-    if size < 0:
-        return {}
-
-    return LRUCache(size)  # type: ignore
+    pass
 
 
 def copy_cache(
     cache: t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"] | None,
 ) -> t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"] | None:
     """Create an empty copy of the given cache."""
-    if cache is None:
-        return None
-
-    if type(cache) is dict:  # noqa E721
-        return {}
-
-    return LRUCache(cache.capacity)  # type: ignore
+    pass
 
 
 def load_extensions(
@@ -113,33 +101,12 @@ def load_extensions(
     """Load the extensions from the list and bind it to the environment.
     Returns a dict of instantiated extensions.
     """
-    result = {}
-
-    for extension in extensions:
-        if isinstance(extension, str):
-            extension = t.cast(type["Extension"], import_string(extension))
-
-        result[extension.identifier] = extension(environment)
-
-    return result
+    pass
 
 
 def _environment_config_check(environment: _env_bound) -> _env_bound:
     """Perform a sanity check on the environment."""
-    assert issubclass(environment.undefined, Undefined), (
-        "'undefined' must be a subclass of 'jinja2.Undefined'."
-    )
-    assert (
-        environment.block_start_string
-        != environment.variable_start_string
-        != environment.comment_start_string
-    ), "block, variable and comment start strings must be different."
-    assert environment.newline_sequence in {
-        "\r",
-        "\r\n",
-        "\n",
-    }, "'newline_sequence' must be one of '\\n', '\\r\\n', or '\\r'."
-    return environment
+    pass
 
 
 class Environment:
@@ -373,7 +340,7 @@ class Environment:
 
         .. versionadded:: 2.5
         """
-        self.extensions.update(load_extensions(self, [extension]))
+        pass
 
     def extend(self, **attributes: t.Any) -> None:
         """Add the items to the instance of the environment if they do not exist
@@ -427,42 +394,16 @@ class Environment:
             Added the ``newline_sequence``, ``keep_trailing_newline``,
             and ``enable_async`` parameters to match ``__init__``.
         """
-        args = dict(locals())
-        del args["self"], args["cache_size"], args["extensions"], args["enable_async"]
-
-        rv = object.__new__(self.__class__)
-        rv.__dict__.update(self.__dict__)
-        rv.overlayed = True
-        rv.linked_to = self
-
-        for key, value in args.items():
-            if value is not missing:
-                setattr(rv, key, value)
-
-        if cache_size is not missing:
-            rv.cache = create_cache(cache_size)
-        else:
-            rv.cache = copy_cache(self.cache)
-
-        rv.extensions = {}
-        for key, value in self.extensions.items():
-            rv.extensions[key] = value.bind(rv)
-        if extensions is not missing:
-            rv.extensions.update(load_extensions(rv, extensions))
-
-        if enable_async is not missing:
-            rv.is_async = enable_async
-
-        return _environment_config_check(rv)
+        pass
 
     @property
     def lexer(self) -> Lexer:
         """The lexer for this environment."""
-        return get_lexer(self)
+        pass
 
     def iter_extensions(self) -> t.Iterator["Extension"]:
         """Iterates over the extensions by priority."""
-        return iter(sorted(self.extensions.values(), key=lambda x: x.priority))
+        pass
 
     def getitem(self, obj: t.Any, argument: str | t.Any) -> t.Any | Undefined:
         """Get an item or attribute of an object but prefer the item."""
@@ -485,14 +426,7 @@ class Environment:
         """Get an item or attribute of an object but prefer the attribute.
         Unlike :meth:`getitem` the attribute *must* be a string.
         """
-        try:
-            return getattr(obj, attribute)
-        except AttributeError:
-            pass
-        try:
-            return obj[attribute]
-        except (TypeError, LookupError, AttributeError):
-            return self.undefined(obj=obj, name=attribute)
+        pass
 
     def _filter_test_common(
         self,
@@ -635,11 +569,7 @@ class Environment:
         of the extensions to be applied you have to filter source through
         the :meth:`preprocess` method.
         """
-        source = str(source)
-        try:
-            return self.lexer.tokeniter(source, name, filename)
-        except TemplateSyntaxError:
-            self.handle_exception(source=source)
+        pass
 
     def preprocess(
         self,
@@ -651,11 +581,7 @@ class Environment:
         called for all parsing and compiling methods but *not* for :meth:`lex`
         because there you usually only want the actual source tokenized.
         """
-        return reduce(
-            lambda s, e: e.preprocess(s, name, filename),
-            self.iter_extensions(),
-            str(source),
-        )
+        pass
 
     def _tokenize(
         self,
@@ -667,16 +593,7 @@ class Environment:
         """Called by the parser to do the preprocessing and filtering
         for all the extensions.  Returns a :class:`~jinja2.lexer.TokenStream`.
         """
-        source = self.preprocess(source, name, filename)
-        stream = self.lexer.tokenize(source, name, filename, state)
-
-        for ext in self.iter_extensions():
-            stream = ext.filter_stream(stream)  # type: ignore
-
-            if not isinstance(stream, TokenStream):
-                stream = TokenStream(stream, name, filename)
-
-        return stream
+        pass
 
     def _generate(
         self,
@@ -799,20 +716,7 @@ class Environment:
 
         .. versionadded:: 2.1
         """
-        parser = Parser(self, source, state="variable")
-        try:
-            expr = parser.parse_expression()
-            if not parser.stream.eos:
-                raise TemplateSyntaxError(
-                    "chunk after expression", parser.stream.current.lineno, None, None
-                )
-            expr.set_environment(self)
-        except TemplateSyntaxError:
-            self.handle_exception(source=source)
-
-        body = [nodes.Assign(nodes.Name("result", "store"), expr, lineno=1)]
-        template = self.from_string(nodes.Template(body, lineno=1))
-        return TemplateExpression(template, undefined_to_none)
+        pass
 
     def compile_templates(
         self,
@@ -840,60 +744,7 @@ class Environment:
 
         .. versionadded:: 2.4
         """
-        from .loaders import ModuleLoader
-
-        if log_function is None:
-
-            def log_function(x: str) -> None:
-                pass
-
-        assert log_function is not None
-        assert self.loader is not None, "No loader configured."
-
-        def write_file(filename: str, data: str) -> None:
-            if zip:
-                info = ZipInfo(filename)
-                info.external_attr = 0o755 << 16
-                zip_file.writestr(info, data)
-            else:
-                with open(os.path.join(target, filename), "wb") as f:
-                    f.write(data.encode("utf8"))
-
-        if zip is not None:
-            from zipfile import ZIP_DEFLATED
-            from zipfile import ZIP_STORED
-            from zipfile import ZipFile
-            from zipfile import ZipInfo
-
-            zip_file = ZipFile(
-                target, "w", dict(deflated=ZIP_DEFLATED, stored=ZIP_STORED)[zip]
-            )
-            log_function(f"Compiling into Zip archive {target!r}")
-        else:
-            if not os.path.isdir(target):
-                os.makedirs(target)
-            log_function(f"Compiling into folder {target!r}")
-
-        try:
-            for name in self.list_templates(extensions, filter_func):
-                source, filename, _ = self.loader.get_source(self, name)
-                try:
-                    code = self.compile(source, name, filename, True, True)
-                except TemplateSyntaxError as e:
-                    if not ignore_errors:
-                        raise
-                    log_function(f'Could not compile "{name}": {e}')
-                    continue
-
-                filename = ModuleLoader.get_module_filename(name)
-
-                write_file(filename, code)
-                log_function(f'Compiled "{name}" as {filename}')
-        finally:
-            if zip:
-                zip_file.close()
-
-        log_function("Finished compiling templates")
+        pass
 
     def list_templates(
         self,
@@ -915,22 +766,7 @@ class Environment:
 
         .. versionadded:: 2.4
         """
-        assert self.loader is not None, "No loader configured."
-        names = self.loader.list_templates()
-
-        if extensions is not None:
-            if filter_func is not None:
-                raise TypeError(
-                    "either extensions or filter_func can be passed, but not both"
-                )
-
-            def filter_func(x: str) -> bool:
-                return "." in x and x.rsplit(".", 1)[1] in extensions
-
-        if filter_func is not None:
-            names = [name for name in names if filter_func(name)]
-
-        return names
+        pass
 
     def handle_exception(self, source: str | None = None) -> "te.NoReturn":
         """Exception handling helper.  This is used internally to either raise
@@ -950,32 +786,13 @@ class Environment:
         Subclasses may override this method and implement template path
         joining here.
         """
-        return template
+        pass
 
     @internalcode
     def _load_template(
         self, name: str, globals: t.MutableMapping[str, t.Any] | None
     ) -> "Template":
-        if self.loader is None:
-            raise TypeError("no loader for this environment specified")
-        cache_key = (weakref.ref(self.loader), name)
-        if self.cache is not None:
-            template = self.cache.get(cache_key)
-            if template is not None and (
-                not self.auto_reload or template.is_up_to_date
-            ):
-                # template.globals is a ChainMap, modifying it will only
-                # affect the template, not the environment globals.
-                if globals:
-                    template.globals.update(globals)
-
-                return template
-
-        template = self.loader.load(self, name, self.make_globals(globals))
-
-        if self.cache is not None:
-            self.cache[cache_key] = template
-        return template
+        pass
 
     @internalcode
     def get_template(
@@ -1007,12 +824,7 @@ class Environment:
             If ``name`` is a :class:`Template` object it is returned
             unchanged.
         """
-        if isinstance(name, Template):
-            return name
-        if parent is not None:
-            name = self.join_path(name, parent)
-
-        return self._load_template(name, globals)
+        pass
 
     @internalcode
     def select_template(
@@ -1049,24 +861,7 @@ class Environment:
 
         .. versionadded:: 2.3
         """
-        if isinstance(names, Undefined):
-            names._fail_with_undefined_error()
-
-        if not names:
-            raise TemplatesNotFound(
-                message="Tried to select from an empty list of templates."
-            )
-
-        for name in names:
-            if isinstance(name, Template):
-                return name
-            if parent is not None:
-                name = self.join_path(name, parent)
-            try:
-                return self._load_template(name, globals)
-            except (TemplateNotFound, UndefinedError):
-                pass
-        raise TemplatesNotFound(names)  # type: ignore
+        pass
 
     @internalcode
     def get_or_select_template(
@@ -1080,11 +875,7 @@ class Environment:
 
         .. versionadded:: 2.3
         """
-        if isinstance(template_name_or_list, (str, Undefined)):
-            return self.get_template(template_name_or_list, parent, globals)
-        elif isinstance(template_name_or_list, Template):
-            return template_name_or_list
-        return self.select_template(template_name_or_list, parent, globals)
+        pass
 
     def from_string(
         self,
@@ -1239,7 +1030,7 @@ class Template:
 
         .. versionadded:: 2.4
         """
-        return cls._from_namespace(environment, module_dict, globals)
+        pass
 
     @classmethod
     def _from_namespace(
@@ -1318,7 +1109,7 @@ class Template:
         """Works exactly like :meth:`generate` but returns a
         :class:`TemplateStream`.
         """
-        return TemplateStream(self.generate(*args, **kwargs))
+        pass
 
     def generate(self, *args: t.Any, **kwargs: t.Any) -> t.Iterator[str]:
         """For very large templates it can be useful to not render the whole
@@ -1395,8 +1186,7 @@ class Template:
         a dict which is then used as context.  The arguments are the same
         as for the :meth:`new_context` method.
         """
-        ctx = self.new_context(vars, shared, locals)
-        return TemplateModule(self, ctx)
+        pass
 
     async def make_module_async(
         self,
@@ -1409,12 +1199,7 @@ class Template:
         normal :meth:`make_module` one.  Likewise the module attribute
         becomes unavailable in async mode.
         """
-        ctx = self.new_context(vars, shared, locals)
-        return TemplateModule(
-            self,
-            ctx,
-            [x async for x in self.root_render_func(ctx)],  # type: ignore
-        )
+        pass
 
     @internalcode
     def _get_default_module(self, ctx: Context | None = None) -> "TemplateModule":
@@ -1429,33 +1214,12 @@ class Template:
         cached because the template can be imported elsewhere, and it
         should have access to only the current template's globals.
         """
-        if self.environment.is_async:
-            raise RuntimeError("Module is not available in async mode.")
-
-        if ctx is not None:
-            keys = ctx.globals_keys - self.globals.keys()
-
-            if keys:
-                return self.make_module({k: ctx.parent[k] for k in keys})
-
-        if self._module is None:
-            self._module = self.make_module()
-
-        return self._module
+        pass
 
     async def _get_default_module_async(
         self, ctx: Context | None = None
     ) -> "TemplateModule":
-        if ctx is not None:
-            keys = ctx.globals_keys - self.globals.keys()
-
-            if keys:
-                return await self.make_module_async({k: ctx.parent[k] for k in keys})
-
-        if self._module is None:
-            self._module = await self.make_module_async()
-
-        return self._module
+        pass
 
     @property
     def module(self) -> "TemplateModule":
@@ -1471,7 +1235,7 @@ class Template:
 
         This attribute is not available if async mode is enabled.
         """
-        return self._get_default_module()
+        pass
 
     def get_corresponding_lineno(self, lineno: int) -> int:
         """Return the source line number of a line number in the
@@ -1485,20 +1249,12 @@ class Template:
     @property
     def is_up_to_date(self) -> bool:
         """If this variable is `False` there is a newer version available."""
-        if self._uptodate is None:
-            return True
-        return self._uptodate()
+        pass
 
     @property
     def debug_info(self) -> list[tuple[int, int]]:
         """The debug info mapping."""
-        if self._debug_info:
-            return [
-                tuple(map(int, x.split("=")))  # type: ignore
-                for x in self._debug_info.split("&")
-            ]
-
-        return []
+        pass
 
     def __repr__(self) -> str:
         if self.name is None:
@@ -1596,63 +1352,18 @@ class TemplateStream:
 
             Template('Hello {{ name }}!').stream(name='foo').dump('hello.html')
         """
-        close = False
-
-        if isinstance(fp, str):
-            if encoding is None:
-                encoding = "utf-8"
-
-            real_fp: t.IO[bytes] = open(fp, "wb")
-            close = True
-        else:
-            real_fp = fp
-
-        try:
-            if encoding is not None:
-                iterable = (x.encode(encoding, errors) for x in self)  # type: ignore
-            else:
-                iterable = self  # type: ignore
-
-            if hasattr(real_fp, "writelines"):
-                real_fp.writelines(iterable)
-            else:
-                for item in iterable:
-                    real_fp.write(item)
-        finally:
-            if close:
-                real_fp.close()
+        pass
 
     def disable_buffering(self) -> None:
         """Disable the output buffering."""
-        self._next = partial(next, self._gen)
-        self.buffered = False
+        pass
 
     def _buffered_generator(self, size: int) -> t.Iterator[str]:
-        buf: list[str] = []
-        c_size = 0
-        push = buf.append
-
-        while True:
-            try:
-                while c_size < size:
-                    c = next(self._gen)
-                    push(c)
-                    if c:
-                        c_size += 1
-            except StopIteration:
-                if not c_size:
-                    return
-            yield concat(buf)
-            del buf[:]
-            c_size = 0
+        pass
 
     def enable_buffering(self, size: int = 5) -> None:
         """Enable buffering.  Buffer `size` items before yielding them."""
-        if size <= 1:
-            raise ValueError("buffer size too small")
-
-        self.buffered = True
-        self._next = partial(next, self._buffered_generator(size))
+        pass
 
     def __iter__(self) -> "TemplateStream":
         return self

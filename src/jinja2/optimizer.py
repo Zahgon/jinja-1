@@ -20,8 +20,7 @@ if t.TYPE_CHECKING:
 def optimize(node: nodes.Node, environment: "Environment") -> nodes.Node:
     """The context hint can be used to perform an static optimization
     based on the context given."""
-    optimizer = Optimizer(environment)
-    return t.cast(nodes.Node, optimizer.visit(node))
+    pass
 
 
 class Optimizer(NodeTransformer):

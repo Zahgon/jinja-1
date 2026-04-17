@@ -165,10 +165,7 @@ def open_if_exists(filename: str, mode: str = "rb") -> t.IO[t.Any] | None:
     """Returns a file descriptor for the filename if that file exists,
     otherwise ``None``.
     """
-    if not os.path.isfile(filename):
-        return None
-
-    return open(filename, mode)
+    pass
 
 
 def object_type_repr(obj: t.Any) -> str:
@@ -444,11 +441,7 @@ class LRUCache:
 
     def _postinit(self) -> None:
         # alias all queue methods for faster lookup
-        self._popleft = self._queue.popleft
-        self._pop = self._queue.pop
-        self._remove = self._queue.remove
-        self._wlock = Lock()
-        self._append = self._queue.append
+        pass
 
     def __getstate__(self) -> t.Mapping[str, t.Any]:
         return {
@@ -560,11 +553,11 @@ class LRUCache:
 
     def values(self) -> t.Iterable[t.Any]:
         """Return a list of all values."""
-        return [x[1] for x in self.items()]
+        pass
 
     def keys(self) -> t.Iterable[t.Any]:
         """Return a list of all keys ordered by most recent usage."""
-        return list(self)
+        pass
 
     def __iter__(self) -> t.Iterator[t.Any]:
         return reversed(tuple(self._queue))
@@ -622,14 +615,7 @@ def select_autoescape(
     disabled_patterns = tuple(f".{x.lstrip('.').lower()}" for x in disabled_extensions)
 
     def autoescape(template_name: str | None) -> bool:
-        if template_name is None:
-            return default_for_string
-        template_name = template_name.lower()
-        if template_name.endswith(enabled_patterns):
-            return True
-        if template_name.endswith(disabled_patterns):
-            return False
-        return default
+        pass
 
     return autoescape
 
@@ -708,14 +694,14 @@ class Cycler:
 
     def reset(self) -> None:
         """Resets the current item to the first item."""
-        self.pos = 0
+        pass
 
     @property
     def current(self) -> t.Any:
         """Return the current item. Equivalent to the item that will be
         returned next time :meth:`next` is called.
         """
-        return self.items[self.pos]
+        pass
 
     def next(self) -> t.Any:
         """Return the current item, then advance :attr:`current` to the

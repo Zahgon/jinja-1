@@ -91,10 +91,7 @@ class Extension:
 
     def bind(self, environment: Environment) -> "te.Self":
         """Create a copy of this extension bound to another environment."""
-        rv = object.__new__(self.__class__)
-        rv.__dict__.update(self.__dict__)
-        rv.environment = environment
-        return rv
+        pass
 
     def preprocess(
         self, source: str, name: str | None, filename: str | None = None
@@ -103,7 +100,7 @@ class Extension:
         preprocess the source.  The `filename` is optional.  The return value
         must be the preprocessed source.
         """
-        return source
+        pass
 
     def filter_stream(
         self, stream: "TokenStream"
@@ -113,7 +110,7 @@ class Extension:
         :class:`~jinja2.lexer.Token`\\s, but it doesn't have to return a
         :class:`~jinja2.lexer.TokenStream`.
         """
-        return stream
+        pass
 
     def parse(self, parser: "Parser") -> nodes.Node | list[nodes.Node]:
         """If any of the :attr:`tags` matched this method is called with the
@@ -163,82 +160,29 @@ class Extension:
 def _gettext_alias(
     __context: Context, *args: t.Any, **kwargs: t.Any
 ) -> t.Any | Undefined:
-    return __context.call(__context.resolve("gettext"), *args, **kwargs)
+    pass
 
 
 def _make_new_gettext(func: t.Callable[[str], str]) -> t.Callable[..., str]:
     @pass_context
-    def gettext(__context: Context, __string: str, **variables: t.Any) -> str:
-        rv = __context.call(func, __string)
-        if __context.eval_ctx.autoescape:
-            rv = Markup(rv)
-        # Always treat as a format string, even if there are no
-        # variables. This makes translation strings more consistent
-        # and predictable. This requires escaping
-        return rv % variables  # type: ignore
-
-    return gettext
+    pass
 
 
 def _make_new_ngettext(func: t.Callable[[str, str, int], str]) -> t.Callable[..., str]:
     @pass_context
-    def ngettext(
-        __context: Context,
-        __singular: str,
-        __plural: str,
-        __num: int,
-        **variables: t.Any,
-    ) -> str:
-        variables.setdefault("num", __num)
-        rv = __context.call(func, __singular, __plural, __num)
-        if __context.eval_ctx.autoescape:
-            rv = Markup(rv)
-        # Always treat as a format string, see gettext comment above.
-        return rv % variables  # type: ignore
-
-    return ngettext
+    pass
 
 
 def _make_new_pgettext(func: t.Callable[[str, str], str]) -> t.Callable[..., str]:
     @pass_context
-    def pgettext(
-        __context: Context, __string_ctx: str, __string: str, **variables: t.Any
-    ) -> str:
-        variables.setdefault("context", __string_ctx)
-        rv = __context.call(func, __string_ctx, __string)
-
-        if __context.eval_ctx.autoescape:
-            rv = Markup(rv)
-
-        # Always treat as a format string, see gettext comment above.
-        return rv % variables  # type: ignore
-
-    return pgettext
+    pass
 
 
 def _make_new_npgettext(
     func: t.Callable[[str, str, str, int], str],
 ) -> t.Callable[..., str]:
     @pass_context
-    def npgettext(
-        __context: Context,
-        __string_ctx: str,
-        __singular: str,
-        __plural: str,
-        __num: int,
-        **variables: t.Any,
-    ) -> str:
-        variables.setdefault("context", __string_ctx)
-        variables.setdefault("num", __num)
-        rv = __context.call(func, __string_ctx, __singular, __plural, __num)
-
-        if __context.eval_ctx.autoescape:
-            rv = Markup(rv)
-
-        # Always treat as a format string, see gettext comment above.
-        return rv % variables  # type: ignore
-
-    return npgettext
+    pass
 
 
 class InternationalizationExtension(Extension):
@@ -270,30 +214,10 @@ class InternationalizationExtension(Extension):
     ) -> None:
         # ugettext and ungettext are preferred in case the I18N library
         # is providing compatibility with older Python versions.
-        gettext = getattr(translations, "ugettext", None)
-        if gettext is None:
-            gettext = translations.gettext
-        ngettext = getattr(translations, "ungettext", None)
-        if ngettext is None:
-            ngettext = translations.ngettext
-
-        pgettext = getattr(translations, "pgettext", None)
-        npgettext = getattr(translations, "npgettext", None)
-        self._install_callables(
-            gettext, ngettext, newstyle=newstyle, pgettext=pgettext, npgettext=npgettext
-        )
+        pass
 
     def _install_null(self, newstyle: bool | None = None) -> None:
-        import gettext
-
-        translations = gettext.NullTranslations()
-        self._install_callables(
-            gettext=translations.gettext,
-            ngettext=translations.ngettext,
-            newstyle=newstyle,
-            pgettext=translations.pgettext,
-            npgettext=translations.npgettext,
-        )
+        pass
 
     def _install_callables(
         self,
@@ -303,34 +227,17 @@ class InternationalizationExtension(Extension):
         pgettext: t.Callable[[str, str], str] | None = None,
         npgettext: t.Callable[[str, str, str, int], str] | None = None,
     ) -> None:
-        if newstyle is not None:
-            self.environment.newstyle_gettext = newstyle  # type: ignore
-        if self.environment.newstyle_gettext:  # type: ignore
-            gettext = _make_new_gettext(gettext)
-            ngettext = _make_new_ngettext(ngettext)
-
-            if pgettext is not None:
-                pgettext = _make_new_pgettext(pgettext)
-
-            if npgettext is not None:
-                npgettext = _make_new_npgettext(npgettext)
-
-        self.environment.globals.update(
-            gettext=gettext, ngettext=ngettext, pgettext=pgettext, npgettext=npgettext
-        )
+        pass
 
     def _uninstall(self, translations: "_SupportedTranslations") -> None:
-        for key in ("gettext", "ngettext", "pgettext", "npgettext"):
-            self.environment.globals.pop(key, None)
+        pass
 
     def _extract(
         self,
         source: str | nodes.Template,
         gettext_functions: t.Sequence[str] = GETTEXT_FUNCTIONS,
     ) -> t.Iterator[tuple[int, str, str | None | tuple[str | None, ...]]]:
-        if isinstance(source, str):
-            source = self.environment.parse(source)
-        return extract_from_ast(source, gettext_functions)
+        pass
 
     def parse(self, parser: "Parser") -> nodes.Node | list[nodes.Node]:
         """Parse a translatable tag."""
@@ -622,14 +529,7 @@ class DebugExtension(Extension):
         return nodes.Output([result], lineno=lineno)
 
     def _render(self, context: Context) -> str:
-        result = {
-            "context": context.get_all(),
-            "filters": sorted(self.environment.filters.keys()),
-            "tests": sorted(self.environment.tests.keys()),
-        }
-
-        # Set the depth since the intent is to show the top few names.
-        return pprint.pformat(result, depth=3, compact=True)
+        pass
 
 
 def extract_from_ast(
@@ -671,42 +571,7 @@ def extract_from_ast(
     to extract any comments.  For comment support you have to use the babel
     extraction interface or extract comments yourself.
     """
-    out: str | None | tuple[str | None, ...]
-
-    for node in ast.find_all(nodes.Call):
-        if (
-            not isinstance(node.node, nodes.Name)
-            or node.node.name not in gettext_functions
-        ):
-            continue
-
-        strings: list[str | None] = []
-
-        for arg in node.args:
-            if isinstance(arg, nodes.Const) and isinstance(arg.value, str):
-                strings.append(arg.value)
-            else:
-                strings.append(None)
-
-        for _ in node.kwargs:
-            strings.append(None)
-        if node.dyn_args is not None:
-            strings.append(None)
-        if node.dyn_kwargs is not None:
-            strings.append(None)
-
-        if not babel_style:
-            out = tuple(x for x in strings if x is not None)
-
-            if not out:
-                continue
-        else:
-            if len(strings) == 1:
-                out = strings[0]
-            else:
-                out = tuple(strings)
-
-        yield node.lineno, node.node.name, out
+    pass
 
 
 class _CommentFinder:
@@ -725,28 +590,10 @@ class _CommentFinder:
         self.last_lineno = 0
 
     def find_backwards(self, offset: int) -> list[str]:
-        try:
-            for _, token_type, token_value in reversed(
-                self.tokens[self.offset : offset]
-            ):
-                if token_type in ("comment", "linecomment"):
-                    try:
-                        prefix, comment = token_value.split(None, 1)
-                    except ValueError:
-                        continue
-                    if prefix in self.comment_tags:
-                        return [comment.rstrip()]
-            return []
-        finally:
-            self.offset = offset
+        pass
 
     def find_comments(self, lineno: int) -> list[str]:
-        if not self.comment_tags or self.last_lineno > lineno:
-            return []
-        for idx, (token_lineno, _, _) in enumerate(self.tokens[self.offset :]):
-            if token_lineno > lineno:
-                return self.find_backwards(self.offset + idx)
-        return self.find_backwards(len(self.tokens))
+        pass
 
 
 def babel_extract(
@@ -782,59 +629,7 @@ def babel_extract(
     :return: an iterator over ``(lineno, funcname, message, comments)`` tuples.
              (comments will be empty currently)
     """
-    extensions: dict[type[Extension], None] = {}
-
-    for extension_name in options.get("extensions", "").split(","):
-        extension_name = extension_name.strip()
-
-        if not extension_name:
-            continue
-
-        extensions[import_string(extension_name)] = None
-
-    if InternationalizationExtension not in extensions:
-        extensions[InternationalizationExtension] = None
-
-    def getbool(options: t.Mapping[str, str], key: str, default: bool = False) -> bool:
-        return options.get(key, str(default)).lower() in {"1", "on", "yes", "true"}
-
-    silent = getbool(options, "silent", True)
-    environment = Environment(
-        options.get("block_start_string", defaults.BLOCK_START_STRING),
-        options.get("block_end_string", defaults.BLOCK_END_STRING),
-        options.get("variable_start_string", defaults.VARIABLE_START_STRING),
-        options.get("variable_end_string", defaults.VARIABLE_END_STRING),
-        options.get("comment_start_string", defaults.COMMENT_START_STRING),
-        options.get("comment_end_string", defaults.COMMENT_END_STRING),
-        options.get("line_statement_prefix") or defaults.LINE_STATEMENT_PREFIX,
-        options.get("line_comment_prefix") or defaults.LINE_COMMENT_PREFIX,
-        getbool(options, "trim_blocks", defaults.TRIM_BLOCKS),
-        getbool(options, "lstrip_blocks", defaults.LSTRIP_BLOCKS),
-        defaults.NEWLINE_SEQUENCE,
-        getbool(options, "keep_trailing_newline", defaults.KEEP_TRAILING_NEWLINE),
-        tuple(extensions),
-        cache_size=0,
-        auto_reload=False,
-    )
-
-    if getbool(options, "trimmed"):
-        environment.policies["ext.i18n.trimmed"] = True
-    if getbool(options, "newstyle_gettext"):
-        environment.newstyle_gettext = True  # type: ignore
-
-    source = fileobj.read().decode(options.get("encoding", "utf-8"))
-    try:
-        node = environment.parse(source)
-        tokens = list(environment.lex(environment.preprocess(source)))
-    except TemplateSyntaxError:
-        if not silent:
-            raise
-        # skip templates with syntax errors
-        return
-
-    finder = _CommentFinder(tokens, comment_tags)
-    for lineno, func, message in extract_from_ast(node, keywords):
-        yield lineno, func, message, finder.find_comments(lineno)
+    pass
 
 
 #: nicer import names

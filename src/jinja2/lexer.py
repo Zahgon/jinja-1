@@ -212,43 +212,7 @@ def count_newlines(value: str) -> int:
 
 def compile_rules(environment: "Environment") -> list[tuple[str, str]]:
     """Compiles all the rules from the environment into a list of rules."""
-    e = re.escape
-    rules = [
-        (
-            len(environment.comment_start_string),
-            TOKEN_COMMENT_BEGIN,
-            e(environment.comment_start_string),
-        ),
-        (
-            len(environment.block_start_string),
-            TOKEN_BLOCK_BEGIN,
-            e(environment.block_start_string),
-        ),
-        (
-            len(environment.variable_start_string),
-            TOKEN_VARIABLE_BEGIN,
-            e(environment.variable_start_string),
-        ),
-    ]
-
-    if environment.line_statement_prefix is not None:
-        rules.append(
-            (
-                len(environment.line_statement_prefix),
-                TOKEN_LINESTATEMENT_BEGIN,
-                r"^[ \t\v]*" + e(environment.line_statement_prefix),
-            )
-        )
-    if environment.line_comment_prefix is not None:
-        rules.append(
-            (
-                len(environment.line_comment_prefix),
-                TOKEN_LINECOMMENT_BEGIN,
-                r"(?:^|(?<=\S))[^\S\r\n]*" + e(environment.line_comment_prefix),
-            )
-        )
-
-    return [x[1:] for x in sorted(rules, reverse=True)]
+    pass
 
 
 class Failure:
@@ -345,7 +309,7 @@ class TokenStream:
     @property
     def eos(self) -> bool:
         """Are we at the end of the stream?"""
-        return not self
+        pass
 
     def push(self, token: Token) -> None:
         """Push a token back to the stream."""
@@ -396,9 +360,7 @@ class TokenStream:
 
     def close(self) -> None:
         """Close the stream."""
-        self.current = Token(self.current.lineno, TOKEN_EOF, "")
-        self._iter = iter(())
-        self.closed = True
+        pass
 
     def expect(self, expr: str) -> Token:
         """Expect a given token type and return it.  This accepts the same
@@ -481,7 +443,7 @@ class Lexer:
         e = re.escape
 
         def c(x: str) -> t.Pattern[str]:
-            return re.compile(x, re.M | re.S)
+            pass
 
         # lexing rules for tags
         tag_rules: list[_Rule] = [
@@ -599,7 +561,7 @@ class Lexer:
         """Replace all newlines with the configured sequence in strings
         and template data.
         """
-        return newline_re.sub(self.newline_sequence, value)
+        pass
 
     def tokenize(
         self,
@@ -609,8 +571,7 @@ class Lexer:
         state: str | None = None,
     ) -> TokenStream:
         """Calls tokeniter + tokenize and wraps it in a token stream."""
-        stream = self.tokeniter(source, name, filename, state)
-        return TokenStream(self.wrap(stream, name, filename), name, filename)
+        pass
 
     def wrap(
         self,
@@ -621,50 +582,7 @@ class Lexer:
         """This is called with the stream as returned by `tokenize` and wraps
         every token in a :class:`Token` and converts the value.
         """
-        for lineno, token, value_str in stream:
-            if token in ignored_tokens:
-                continue
-
-            value: t.Any = value_str
-
-            if token == TOKEN_LINESTATEMENT_BEGIN:
-                token = TOKEN_BLOCK_BEGIN
-            elif token == TOKEN_LINESTATEMENT_END:
-                token = TOKEN_BLOCK_END
-            # we are not interested in those tokens in the parser
-            elif token in (TOKEN_RAW_BEGIN, TOKEN_RAW_END):
-                continue
-            elif token == TOKEN_DATA:
-                value = self._normalize_newlines(value_str)
-            elif token == "keyword":
-                token = value_str
-            elif token == TOKEN_NAME:
-                value = value_str
-
-                if not value.isidentifier():
-                    raise TemplateSyntaxError(
-                        "Invalid character in identifier", lineno, name, filename
-                    )
-            elif token == TOKEN_STRING:
-                # try to unescape string
-                try:
-                    value = (
-                        self._normalize_newlines(value_str[1:-1])
-                        .encode("ascii", "backslashreplace")
-                        .decode("unicode-escape")
-                    )
-                except Exception as e:
-                    msg = str(e).split(":")[-1].strip()
-                    raise TemplateSyntaxError(msg, lineno, name, filename) from e
-            elif token == TOKEN_INTEGER:
-                value = int(value_str.replace("_", ""), 0)
-            elif token == TOKEN_FLOAT:
-                # remove all "_" first to support more Python versions
-                value = literal_eval(value_str.replace("_", ""))
-            elif token == TOKEN_OPERATOR:
-                token = operators[value_str]
-
-            yield Token(lineno, token, value)
+        pass
 
     def tokeniter(
         self,
@@ -680,189 +598,4 @@ class Lexer:
             Only ``\\n``, ``\\r\\n`` and ``\\r`` are treated as line
             breaks.
         """
-        lines = newline_re.split(source)[::2]
-
-        if not self.keep_trailing_newline and lines[-1] == "":
-            del lines[-1]
-
-        source = "\n".join(lines)
-        pos = 0
-        lineno = 1
-        stack = ["root"]
-
-        if state is not None and state != "root":
-            assert state in ("variable", "block"), "invalid state"
-            stack.append(state + "_begin")
-
-        statetokens = self.rules[stack[-1]]
-        source_length = len(source)
-        balancing_stack: list[str] = []
-        newlines_stripped = 0
-        line_starting = True
-
-        while True:
-            # tokenizer loop
-            for regex, tokens, new_state in statetokens:
-                m = regex.match(source, pos)
-
-                # if no match we try again with the next rule
-                if m is None:
-                    continue
-
-                # we only match blocks and variables if braces / parentheses
-                # are balanced. continue parsing with the lower rule which
-                # is the operator rule. do this only if the end tags look
-                # like operators
-                if balancing_stack and tokens in (
-                    TOKEN_VARIABLE_END,
-                    TOKEN_BLOCK_END,
-                    TOKEN_LINESTATEMENT_END,
-                ):
-                    continue
-
-                # tuples support more options
-                if isinstance(tokens, tuple):
-                    groups: t.Sequence[str] = m.groups()
-
-                    if isinstance(tokens, OptionalLStrip):
-                        # Rule supports lstrip. Match will look like
-                        # text, block type, whitespace control, type, control, ...
-                        text = groups[0]
-                        # Skipping the text and first type, every other group is the
-                        # whitespace control for each type. One of the groups will be
-                        # -, +, or empty string instead of None.
-                        strip_sign = next(g for g in groups[2::2] if g is not None)
-
-                        if strip_sign == "-":
-                            # Strip all whitespace between the text and the tag.
-                            stripped = text.rstrip()
-                            newlines_stripped = text[len(stripped) :].count("\n")
-                            groups = [stripped, *groups[1:]]
-                        elif (
-                            # Not marked for preserving whitespace.
-                            strip_sign != "+"
-                            # lstrip is enabled.
-                            and self.lstrip_blocks
-                            # Not a variable expression.
-                            and not m.groupdict().get(TOKEN_VARIABLE_BEGIN)
-                        ):
-                            # The start of text between the last newline and the tag.
-                            l_pos = text.rfind("\n") + 1
-
-                            if l_pos > 0 or line_starting:
-                                # If there's only whitespace between the newline and the
-                                # tag, strip it.
-                                if whitespace_re.fullmatch(text, l_pos):
-                                    groups = [text[:l_pos], *groups[1:]]
-
-                    for idx, token in enumerate(tokens):
-                        # failure group
-                        if isinstance(token, Failure):
-                            raise token(lineno, filename)
-                        # bygroup is a bit more complex, in that case we
-                        # yield for the current token the first named
-                        # group that matched
-                        elif token == "#bygroup":
-                            for key, value in m.groupdict().items():
-                                if value is not None:
-                                    yield lineno, key, value
-                                    lineno += value.count("\n")
-                                    break
-                            else:
-                                raise RuntimeError(
-                                    f"{regex!r} wanted to resolve the token dynamically"
-                                    " but no group matched"
-                                )
-                        # normal group
-                        else:
-                            data = groups[idx]
-
-                            if data or token not in ignore_if_empty:
-                                yield lineno, token, data  # type: ignore[misc]
-
-                            lineno += data.count("\n") + newlines_stripped
-                            newlines_stripped = 0
-
-                # strings as token just are yielded as it.
-                else:
-                    data = m.group()
-
-                    # update brace/parentheses balance
-                    if tokens == TOKEN_OPERATOR:
-                        if data == "{":
-                            balancing_stack.append("}")
-                        elif data == "(":
-                            balancing_stack.append(")")
-                        elif data == "[":
-                            balancing_stack.append("]")
-                        elif data in ("}", ")", "]"):
-                            if not balancing_stack:
-                                raise TemplateSyntaxError(
-                                    f"unexpected '{data}'", lineno, name, filename
-                                )
-
-                            expected_op = balancing_stack.pop()
-
-                            if expected_op != data:
-                                raise TemplateSyntaxError(
-                                    f"unexpected '{data}', expected '{expected_op}'",
-                                    lineno,
-                                    name,
-                                    filename,
-                                )
-
-                    # yield items
-                    if data or tokens not in ignore_if_empty:
-                        yield lineno, tokens, data
-
-                    lineno += data.count("\n")
-
-                line_starting = m.group()[-1:] == "\n"
-                # fetch new position into new variable so that we can check
-                # if there is a internal parsing error which would result
-                # in an infinite loop
-                pos2 = m.end()
-
-                # handle state changes
-                if new_state is not None:
-                    # remove the uppermost state
-                    if new_state == "#pop":
-                        stack.pop()
-                    # resolve the new state by group checking
-                    elif new_state == "#bygroup":
-                        for key, value in m.groupdict().items():
-                            if value is not None:
-                                stack.append(key)
-                                break
-                        else:
-                            raise RuntimeError(
-                                f"{regex!r} wanted to resolve the new state dynamically"
-                                f" but no group matched"
-                            )
-                    # direct state name given
-                    else:
-                        stack.append(new_state)
-
-                    statetokens = self.rules[stack[-1]]
-                # we are still at the same position and no stack change.
-                # this means a loop without break condition, avoid that and
-                # raise error
-                elif pos2 == pos:
-                    raise RuntimeError(
-                        f"{regex!r} yielded empty string without stack change"
-                    )
-
-                # publish new function and start again
-                pos = pos2
-                break
-            # if loop terminated without break we haven't found a single match
-            # either we are at the end of the file or we have a problem
-            else:
-                # end of text
-                if pos >= source_length:
-                    return
-
-                # something went wrong
-                raise TemplateSyntaxError(
-                    f"unexpected char {source[pos]!r} at {pos}", lineno, name, filename
-                )
+        pass

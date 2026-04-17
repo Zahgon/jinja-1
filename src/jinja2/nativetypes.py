@@ -22,29 +22,7 @@ def native_concat(values: t.Iterable[t.Any]) -> t.Any | None:
 
     :param values: Iterable of outputs to concatenate.
     """
-    head = list(islice(values, 2))
-
-    if not head:
-        return None
-
-    if len(head) == 1:
-        raw = head[0]
-        if not isinstance(raw, str):
-            return raw
-    else:
-        if isinstance(values, GeneratorType):
-            values = chain(head, values)
-        raw = "".join([str(v) for v in values])
-
-    try:
-        return literal_eval(
-            # In Python 3.10+ ast.literal_eval removes leading spaces/tabs
-            # from the given string. For backwards compatibility we need to
-            # parse the string ourselves without removing leading spaces/tabs.
-            parse(raw, mode="eval")
-        )
-    except (ValueError, SyntaxError, MemoryError):
-        return raw
+    pass
 
 
 class NativeCodeGenerator(CodeGenerator):
@@ -54,35 +32,25 @@ class NativeCodeGenerator(CodeGenerator):
 
     @staticmethod
     def _default_finalize(value: t.Any) -> t.Any:
-        return value
+        pass
 
     def _output_const_repr(self, group: t.Iterable[t.Any]) -> str:
-        return repr("".join([str(v) for v in group]))
+        pass
 
     def _output_child_to_const(
         self, node: nodes.Expr, frame: Frame, finalize: CodeGenerator._FinalizeInfo
     ) -> t.Any:
-        const = node.as_const(frame.eval_ctx)
-
-        if not has_safe_repr(const):
-            raise nodes.Impossible()
-
-        if isinstance(node, nodes.TemplateData):
-            return const
-
-        return finalize.const(const)  # type: ignore
+        pass
 
     def _output_child_pre(
         self, node: nodes.Expr, frame: Frame, finalize: CodeGenerator._FinalizeInfo
     ) -> None:
-        if finalize.src is not None:
-            self.write(finalize.src)
+        pass
 
     def _output_child_post(
         self, node: nodes.Expr, frame: Frame, finalize: CodeGenerator._FinalizeInfo
     ) -> None:
-        if finalize.src is not None:
-            self.write(")")
+        pass
 
 
 class NativeEnvironment(Environment):

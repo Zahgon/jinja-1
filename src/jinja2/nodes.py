@@ -84,11 +84,10 @@ class EvalContext:
         self.volatile = False
 
     def save(self) -> t.Mapping[str, t.Any]:
-        return self.__dict__.copy()
+        pass
 
     def revert(self, old: t.Mapping[str, t.Any]) -> None:
-        self.__dict__.clear()
-        self.__dict__.update(old)
+        pass
 
 
 def get_eval_context(node: "Node", ctx: EvalContext | None) -> EvalContext:
@@ -187,10 +186,7 @@ class Node(metaclass=NodeType):
         """Find the first node of a given type.  If no such node exists the
         return value is `None`.
         """
-        for result in self.find_all(node_type):
-            return result
-
-        return None
+        pass
 
     def find_all(
         self, node_type: type[_NodeBound] | tuple[type[_NodeBound], ...]
@@ -198,10 +194,7 @@ class Node(metaclass=NodeType):
         """Find all the nodes of a given type.  If the type is a tuple,
         the check is performed for any of the tuple items.
         """
-        for child in self.iter_child_nodes():
-            if isinstance(child, node_type):
-                yield child  # type: ignore
-            yield from child.find_all(node_type)
+        pass
 
     def set_ctx(self, ctx: str) -> "Node":
         """Reset the context of a node and all child nodes.  Per default the
@@ -250,33 +243,7 @@ class Node(metaclass=NodeType):
         return f"{type(self).__name__}({args_str})"
 
     def dump(self) -> str:
-        def _dump(node: Node | t.Any) -> None:
-            if not isinstance(node, Node):
-                buf.append(repr(node))
-                return
-
-            buf.append(f"nodes.{type(node).__name__}(")
-            if not node.fields:
-                buf.append(")")
-                return
-            for idx, field in enumerate(node.fields):
-                if idx:
-                    buf.append(", ")
-                value = getattr(node, field)
-                if isinstance(value, list):
-                    buf.append("[")
-                    for idx, item in enumerate(value):
-                        if idx:
-                            buf.append(", ")
-                        _dump(item)
-                    buf.append("]")
-                else:
-                    _dump(value)
-            buf.append(")")
-
-        buf: list[str] = []
-        _dump(self)
-        return "".join(buf)
+        pass
 
 
 class Stmt(Node):

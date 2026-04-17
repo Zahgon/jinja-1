@@ -12,7 +12,7 @@ class TemplateError(Exception):
 
     @property
     def message(self) -> str | None:
-        return self.args[0] if self.args else None
+        pass
 
 
 class TemplateNotFound(IOError, LookupError, TemplateError):

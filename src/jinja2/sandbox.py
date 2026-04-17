@@ -88,15 +88,7 @@ def safe_range(*args: int) -> range:
     """A range that can't generate ranges with a length of more than
     MAX_RANGE items.
     """
-    rng = range(*args)
-
-    if len(rng) > MAX_RANGE:
-        raise OverflowError(
-            "Range too big. The sandbox blocks ranges larger than"
-            f" MAX_RANGE ({MAX_RANGE})."
-        )
-
-    return rng
+    pass
 
 
 def unsafe(f: F) -> F:
@@ -261,9 +253,7 @@ class SandboxedEnvironment(Environment):
         This also recognizes the Django convention of setting
         ``func.alters_data = True``.
         """
-        return not (
-            getattr(obj, "unsafe_callable", False) or getattr(obj, "alters_data", False)
-        )
+        pass
 
     def call_binop(
         self, context: Context, operator: str, left: t.Any, right: t.Any
@@ -274,7 +264,7 @@ class SandboxedEnvironment(Environment):
 
         .. versionadded:: 2.6
         """
-        return self.binop_table[operator](left, right)
+        pass
 
     def call_unop(self, context: Context, operator: str, arg: t.Any) -> t.Any:
         """For intercepted unary operator calls (:meth:`intercepted_unops`)
@@ -283,7 +273,7 @@ class SandboxedEnvironment(Environment):
 
         .. versionadded:: 2.6
         """
-        return self.unop_table[operator](arg)
+        pass
 
     def getitem(self, obj: t.Any, argument: str | t.Any) -> t.Any | Undefined:
         """Subscribe an object from sandboxed code."""
@@ -313,21 +303,7 @@ class SandboxedEnvironment(Environment):
         """Subscribe an object from sandboxed code and prefer the
         attribute.  The attribute passed *must* be a bytestring.
         """
-        try:
-            value = getattr(obj, attribute)
-        except AttributeError:
-            try:
-                return obj[attribute]
-            except (TypeError, LookupError):
-                pass
-        else:
-            fmt = self.wrap_str_format(value)
-            if fmt is not None:
-                return fmt
-            if self.is_safe_attribute(obj, attribute, value):
-                return value
-            return self.unsafe_undefined(obj, attribute)
-        return self.undefined(obj=obj, name=attribute)
+        pass
 
     def unsafe_undefined(self, obj: t.Any, attribute: str) -> Undefined:
         """Return an undefined object for unsafe attributes."""
@@ -367,19 +343,7 @@ class SandboxedEnvironment(Environment):
         vformat = formatter.vformat
 
         def wrapper(*args: t.Any, **kwargs: t.Any) -> str:
-            if is_format_map:
-                if kwargs:
-                    raise TypeError("format_map() takes no keyword arguments")
-
-                if len(args) != 1:
-                    raise TypeError(
-                        f"format_map() takes exactly one argument ({len(args)} given)"
-                    )
-
-                kwargs = args[0]
-                args = ()
-
-            return str_type(vformat(f_self, args, kwargs))
+            pass
 
         return update_wrapper(wrapper, value)
 
@@ -391,12 +355,7 @@ class SandboxedEnvironment(Environment):
         **kwargs: t.Any,
     ) -> t.Any:
         """Call an object from sandboxed code."""
-
-        # the double prefixes are to avoid double keyword argument
-        # errors when proxying the call.
-        if not __self.is_safe_callable(__obj):
-            raise SecurityError(f"{__obj!r} is not safely callable")
-        return __context.call(__obj, *args, **kwargs)
+        pass
 
 
 class ImmutableSandboxedEnvironment(SandboxedEnvironment):
@@ -420,14 +379,7 @@ class SandboxedFormatter(Formatter):
     def get_field(
         self, field_name: str, args: t.Sequence[t.Any], kwargs: t.Mapping[str, t.Any]
     ) -> tuple[t.Any, str]:
-        first, rest = formatter_field_name_split(field_name)
-        obj = self.get_value(first, args, kwargs)
-        for is_attr, i in rest:
-            if is_attr:
-                obj = self._env.getattr(obj, i)
-            else:
-                obj = self._env.getitem(obj, i)
-        return obj, first
+        pass
 
 
 class SandboxedEscapeFormatter(SandboxedFormatter, EscapeFormatter):
