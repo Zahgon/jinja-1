@@ -165,24 +165,51 @@ def _gettext_alias(
 
 def _make_new_gettext(func: t.Callable[[str], str]) -> t.Callable[..., str]:
     @pass_context
-    pass
+    def gettext(__context: Context, __string: str, **variables: t.Any) -> str:
+        pass
+
+    return gettext
 
 
 def _make_new_ngettext(func: t.Callable[[str, str, int], str]) -> t.Callable[..., str]:
     @pass_context
-    pass
+    def ngettext(
+        __context: Context,
+        __singular: str,
+        __plural: str,
+        __num: int,
+        **variables: t.Any,
+    ) -> str:
+        pass
+
+    return ngettext
 
 
 def _make_new_pgettext(func: t.Callable[[str, str], str]) -> t.Callable[..., str]:
     @pass_context
-    pass
+    def pgettext(
+        __context: Context, __string_ctx: str, __string: str, **variables: t.Any
+    ) -> str:
+        pass
+
+    return pgettext
 
 
 def _make_new_npgettext(
     func: t.Callable[[str, str, str, int], str],
 ) -> t.Callable[..., str]:
     @pass_context
-    pass
+    def npgettext(
+        __context: Context,
+        __string_ctx: str,
+        __singular: str,
+        __plural: str,
+        __num: int,
+        **variables: t.Any,
+    ) -> str:
+        pass
+
+    return npgettext
 
 
 class InternationalizationExtension(Extension):
